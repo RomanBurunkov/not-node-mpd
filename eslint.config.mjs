@@ -35,5 +35,6 @@ export default [{
     "linebreak-style": ["error", "unix"],
     semi: ["error", "always"],
     "no-useless-escape": [0],
+    "no-trailing-spaces": ["error"]
   },
 }];
