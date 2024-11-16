@@ -25,14 +25,15 @@ export default class MPD extends EventEmitter {
    * @param {string} options.type MPD connection type: ipc/network.
    * @param {boolean} options.keepAlive Use keep alive for MPD network connection.
    */
-  constructor(options = {}) {
+  constructor(options) {
     super();
     // Applying options.
-    this.ipc = options.ipc || DEF_SOCKET;
-    this.host = options.host || DEF_HOST;
-    this.port = options.port || DEF_PORT;
-    this.type = CONN_TYPES.includes(options.type) ? options.type : DEF_CONN_TYPE;
-    this.keepAlive = !!options.keepAlive || DEF_KEEP_ALIVE;
+    const opts = options || {};
+    this.ipc = opts.ipc || DEF_SOCKET;
+    this.host = opts.host || DEF_HOST;
+    this.port = opts.port || DEF_PORT;
+    this.type = CONN_TYPES.includes(opts.type) ? opts.type : DEF_CONN_TYPE;
+    this.keepAlive = !!opts.keepAlive || DEF_KEEP_ALIVE;
     // Init props.
     this.songs = [];
     this.status = {};
@@ -68,9 +69,9 @@ export default class MPD extends EventEmitter {
 
   volume(vol) { return this.command('setvol', vol); }
 
-  repeat(repeat = 1) { return this.command('repeat', repeat); }
+  repeat(repeat) { return this.command('repeat', repeat || 1); }
 
-  crossfade(seconds = 0) { return this.command('crossfade', seconds); }
+  crossfade(seconds) { return this.command('crossfade', seconds || 0); }
 
   seek(songId, time) { return this.command('seek', songId, time); }
 
@@ -258,7 +259,7 @@ export default class MPD extends EventEmitter {
 
   /**
    * Initiate MPD connection with greeting message.
-   * @param {string} message 
+   * @param {string} message
    */
   _initialGreeting(message) {
     this.server = parseGreeting(message);
@@ -304,7 +305,7 @@ export default class MPD extends EventEmitter {
   _enterIdle() {
     this.idling = true;
     this.commanding = false;
-    this._write('idle');    
+    this._write('idle');
   }
 
   _leaveIdle(callback) {

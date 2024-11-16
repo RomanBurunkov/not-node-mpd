@@ -6,7 +6,7 @@
  * @param {string} kvp String to parse for kvp.
  * @returns {Object|false} KVP object or false if parsing failed.
  */
-export const parseKvp = (kvp = '') => {
+export const parseKvp = (kvp) => {
   if (!kvp || typeof kvp !== 'string') {
     return false;
   }
@@ -24,7 +24,7 @@ export const parseKvp = (kvp = '') => {
  * @param {string} message MPD greeting message.
  * @returns {Object|false} mpd proto details: { name: service name(MPD), version: proto version}.
  */
-export const parseGreeting = (message = '') => {
+export const parseGreeting = (message) => {
   if (!message || typeof message !== 'string') {
     return false;
   }
@@ -36,7 +36,7 @@ export const parseGreeting = (message = '') => {
 
 /**
  * MPD protocol has several return patterns.
- * @returns {Array} Array with supported mpd return patterns.
+ * @returns {Array<RegExp>} Array with supported mpd return patterns.
  */
 export const returnPatterns = () => [
   /OK(?:\n|$)/g,
@@ -48,8 +48,10 @@ export const returnPatterns = () => [
  * @param {string} message MPD message.
  * @returns {number|false} Total message length or false if no marks has been found.
  */
-export const findReturn = (message = '') => {
-  if (!message) return false;
+export const findReturn = (message) => {
+  if (!message || typeof message !== 'string') {
+    return false;
+  }
   for (let pattern of returnPatterns()) {
     const arr = pattern.exec(message);
     if (arr) return arr.index + arr[0].length;
@@ -62,7 +64,7 @@ export const findReturn = (message = '') => {
  * @param {string} message MPD message.
  * @returns {Array} List of found changes.
  */
-export const parseChanged = (message = '') => {
+export const parseChanged = (message) => {
   if (!message || typeof message !== 'string') {
     return [];
   }
