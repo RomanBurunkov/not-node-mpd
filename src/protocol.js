@@ -44,19 +44,19 @@ export const returnPatterns = () => [
 ];
 
 /**
- * Searches for an mpd protocol return mark in the response data.
+ * Searches for an MPD protocol return mark in the response data.
  * @param {string} message MPD message.
- * @returns {number|false} Total message length or false if no marks has been found.
+ * @returns {number} Total message length or -1 if no marks has been found.
  */
 export const findReturn = (message) => {
   if (!message || typeof message !== 'string') {
-    return false;
+    return -1;
   }
-  for (let pattern of returnPatterns()) {
+  for (const pattern of returnPatterns()) {
     const arr = pattern.exec(message);
     if (arr) return arr.index + arr[0].length;
   }
-  return false;
+  return -1;
 };
 
 /**

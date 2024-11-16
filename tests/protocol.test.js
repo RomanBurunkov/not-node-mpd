@@ -72,11 +72,27 @@ describe('Test returnPatterns function', () => {
 });
 
 describe('Test findReturn function', () => {
+
   test('Is defined', () => expect(findReturn).toBeDefined());
-  test('Returns false if no data passed', () => expect(findReturn()).toBe(false));
-  test('Returns false if passed string doesn\'t contain mpd return mark', () => {
-    expect(findReturn('Some test message')).toBe(false);
+  test('Returns -1 if no data passed', () => expect(findReturn()).toBe(-1));
+  test('Returns -1 if passed string doesn\'t contain mpd return mark', () => {
+    expect(findReturn('Some test message')).toBe(-1);
   });
+
+  test('Returns 2 for simple "OK" response', () => {
+    expect(findReturn('OK')).toBe(2);
+  });
+
+  test('Returns return pattern index for "OK" response with data', () => {
+    const resp = "foo: bar\nOK";
+    expect(findReturn(resp)).toBe(resp.length);
+  });
+
+  test('Returns return pattern index for "ACK" response with an error', () => {
+    const errResp = "ACK [5@5] {current_command} message_text";
+    expect(findReturn(errResp)).toBe(errResp.length);
+  });
+
 });
 
 describe('Test parseChanged function', () => {

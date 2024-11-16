@@ -277,7 +277,7 @@ export default class MPD extends EventEmitter {
     if (!this.idling && !this.commanding) return;
     this[buffer] += !data ? '' : data.trim();
     const index = findReturn(this[buffer]);
-    if (index === false) return;
+    if (index === -1) return;
     // We found a return mark
     const string = this[buffer].substring(0, index).trim();
     this[buffer] = this[buffer].substring(index, this[buffer].length);
