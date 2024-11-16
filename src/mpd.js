@@ -120,6 +120,7 @@ module.exports = class MPD extends EventEmitter {
       // Connecting to the MPD via IPC or TCP.
       this.client.connect(...(this.type === 'ipc' ? [this.ipc] : [this.port, this.host]));
     } catch(e) {
+      console.error(e);
       this.restoreConnection();
     }
   }
