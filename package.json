@@ -1,16 +1,18 @@
 {
   "name": "tm-node-mpd",
-  "version": "0.3.3",
+  "version": "1.0.0",
   "description": "Music player daemon client library(forked from node-mpd).",
   "main": "index.js",
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
     "lint": "./node_modules/.bin/eslint ./src/**/**.js",
-    "lint:fix": "./node_modules/.bin/eslint --fix ./src/**/**.js"
+    "lint:fix": "./node_modules/.bin/eslint --fix ./src/**/**.js",
+    "win:lint": ".\\node_modules\\.bin\\eslint .\\src\\**\\**.js",
+    "win:lint:fix": ".\\node_modules\\.bin\\eslint --fix .\\src\\**\\**.js"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=18"
   },
   "jest": {
     "verbose": true,
@@ -27,8 +29,11 @@
     "daemon"
   ],
   "devDependencies": {
-    "eslint": "^5.11.1",
-    "jest": "^26.6.3"
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.15.0",
+    "eslint": "^9.15.0",
+    "globals": "^15.12.0",
+    "jest": "^29.7.0"
   },
   "author": "Roman Burunkov <romon2002@gmail.com>",
   "license": "MIT"
