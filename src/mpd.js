@@ -1,6 +1,7 @@
-import Song from './song';
 import { Socket } from 'node:net';
 import { EventEmitter } from 'node:events';
+
+import Song from './song';
 import { parseKvp, parseGreeting, findReturn, parseChanged } from './protocol';
 
 const DEF_PORT = 6600;
@@ -8,6 +9,7 @@ const DEF_HOST = 'localhost';
 const DEF_SOCKET = '/var/run/mpd/socket';
 const DEF_KEEP_ALIVE = false;
 const DEF_CONN_TYPE = 'network';
+
 const CONN_TYPES = ['ipc', 'network'];
 const RECONNECT_INTERVAL = 5000;
 const CONST_FILE_LINE_START = 'file:';
@@ -45,7 +47,6 @@ export default class MPD extends EventEmitter {
     this.disconnecting = false;
     this._initGenericCommand();
     this.on('disconnected', () => this.restoreConnection());
-    return this;
   }
 
   /**
@@ -78,13 +79,13 @@ export default class MPD extends EventEmitter {
   updateSongs() {
     return this._sendCommand('update')
       .then((r) => {
-        let arr = r.split(/\n/);
+        const arr = r.split(/\n/);
         return this._answerCallbackError(arr[1]);
       });
   }
 
   searchAdd(search) {
-    let args = ['searchadd'];
+    const args = ['searchadd'];
     for (let key in search) {
       args.push(key);
       args.push(search[key]);
@@ -92,9 +93,7 @@ export default class MPD extends EventEmitter {
     return this.command(...args);
   }
 
-  /**
-   * Connect and disconnect
-   */
+  /** Initiates connection to the mpd service */
   connect() {
     try {
       this.client = new Socket();
@@ -147,9 +146,7 @@ export default class MPD extends EventEmitter {
     }
   }
 
-  /**
-   * Not-so-toplevel methods
-   */
+  /* Not-so-toplevel methods */
 
   _setReady() {
     this.emit('ready', this.status, this.server);
@@ -169,7 +166,7 @@ export default class MPD extends EventEmitter {
   _updatePlaylist() {
     return this._sendCommand('playlistinfo')
       .then((message) => {
-        let lines = message.split("\n");
+        const lines = message.split("\n");
         this.playlist = [];
         let songLines = [];
         let pos;
@@ -197,7 +194,7 @@ export default class MPD extends EventEmitter {
   _updateSongs() {
     return this._sendCommand('listallinfo')
       .then((message) => {
-        let lines = message.split("\n");
+        const lines = message.split("\n");
         this.songs = [];
         let songLines = [];
         for (let i = 0; i < lines.length - 1; i += 1) {
@@ -229,8 +226,8 @@ export default class MPD extends EventEmitter {
       case 'playlistlength': return parseInt(val, 10);
       case 'volume': return parseFloat(val.replace('%', '')) / 100;
       case 'time': {
-        const times = val.split(':');
-        return { elapsed: times[0], length: times[1] };
+        const [elapsed, length] = val.split(':');
+        return { elapsed, length };
       }
       default: return val;
     }
@@ -253,9 +250,7 @@ export default class MPD extends EventEmitter {
       .then(r => this._parseStatusResponse(r));
   }
 
-  /*
-   * Message handling
-   */
+  /* Message handling */
 
   /**
    * Initiate MPD connection with greeting message.
@@ -293,9 +288,7 @@ export default class MPD extends EventEmitter {
     }
   }
 
-  /**
-   * Idling
-   */
+  /* Idling */
 
   _checkIdle() {
     if (this._activeListener || this._requests.length || this.idling) return;
@@ -318,7 +311,7 @@ export default class MPD extends EventEmitter {
   }
 
   /**
-   * Handle idle mode updates.
+   * Handles idle mode updates.
    * @param {string} message Message from MPD.
    */
   async _onMessage(message) {
@@ -360,9 +353,7 @@ export default class MPD extends EventEmitter {
     }
   }
 
-  /**
-   * Sending messages
-   */
+  /* Sending messages */
 
   _dequeue(request) {
     this.busy = false;
