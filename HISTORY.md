@@ -3,6 +3,7 @@
   * Update development dependencies.
   * Update minimal Node version to 18.
   * Do not use functions arguments default values(performance concernses).
+  * Use Map for Fields Map instead of Array in Song Class(performance concernses).
 
 # 0.3.3 (2021-03-07)
 
