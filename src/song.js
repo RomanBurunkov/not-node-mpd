@@ -3,17 +3,17 @@ import { parseKvp } from './protocol';
 const RES_OK = 'OK';
 const ERR_MSG_UNKNOWN = 'Unknown response while parsing song.';
 
-const FIELD_MAP = [
-  { key: 'file', val: 'file' },
-  { key: 'time', val: 'Time' },
-  { key: 'date', val: 'Date' },
-  { key: 'genre', val: 'Genre' },
-  { key: 'title', val: 'Title' },
-  { key: 'album', val: 'Album' },
-  { key: 'track', val: 'Track' },
-  { key: 'artist', val: 'Artist' },
-  { key: 'lastModified', val: 'Last-Modified' }
-];
+const FIELDS_MAP = new Map([
+  ['file', 'file'],
+  ['Time', 'time'],
+  ['Date', 'date'],
+  ['Genre', 'genre'],
+  ['Title', 'title'],
+  ['Album', 'album'],
+  ['Track', 'track'],
+  ['Artist', 'artist'],
+  ['Last-Modified', 'lastModified'],
+]);
 
 export default class Song {
   constructor(data) {
@@ -40,9 +40,9 @@ export default class Song {
       .forEach((itm) => {
         const kvp = parseKvp(itm);
         if (!kvp) throw new Error(ERR_MSG_UNKNOWN);
-        const fieldInfo = FIELD_MAP.find(fldKvp => fldKvp.val === kvp.key);
-        if (!fieldInfo) return;
-        info[fieldInfo.key] = kvp.val;
+        const infoKey = FIELDS_MAP.get(kvp.key);
+        if (!infoKey) return;
+        info[infoKey] = kvp.val;
       });
     return info;
   }

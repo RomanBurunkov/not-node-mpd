@@ -7,11 +7,12 @@ tm-node-mpd
 This is fork of [node-mpd](https://github.com/Prior99/node-mpd) project by Frederick Gnodtke.
 
 tm-node-mpd is a library for simple communicating with a [music player daemon](http://www.musicpd.org/).
-It uses a IPC and TCP-socket to communicate with the daemon and provides a list of highlevel promise based methods.
+It can use an IPC or TCP-socket to communicate with the daemon and provides a list of highlevel async methods.
 
 Make sure to take a look at the [examples](https://github.com/RomanBurunkov/tm-node-mpd/tree/master/examples).
 
 Note that 0.2 branch was experimental. Do not use is it at all.
+Version 1.0.0 has been updated with latest development dependencies and migrated to ECMAScript Modules.
 
 Available options
 ------
