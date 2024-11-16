@@ -1,4 +1,4 @@
-const { parseKvp } = require('./protocol');
+import { parseKvp } from './protocol';
 
 const RES_OK = 'OK';
 const ERR_MSG_UNKNOWN = 'Unknown response while parsing song.';
@@ -15,7 +15,7 @@ const FIELD_MAP = [
   { key: 'lastModified', val: 'Last-Modified' }
 ];
 
-module.exports = class Song {
+export default class Song {
   constructor(data) {
     const info = this._parseInfo(data);
     for (let key in info) {

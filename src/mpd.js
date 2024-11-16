@@ -1,7 +1,7 @@
-const Song = require('./song');
-const { Socket } = require('net');
-const { EventEmitter } = require('events');
-const { parseKvp, parseGreeting, findReturn, parseChanged } = require('./protocol');
+import Song from './song';
+import { Socket } from 'node:net';
+import { EventEmitter } from 'node:events';
+import { parseKvp, parseGreeting, findReturn, parseChanged } from './protocol';
 
 const DEF_PORT = 6600;
 const DEF_HOST = 'localhost';
@@ -15,7 +15,7 @@ const GENERIC_COMMANDS = ['play', 'stop', 'pause', 'next', 'previous', 'toggle',
 
 const buffer = Symbol('Read buffer');
 
-module.exports = class MPD extends EventEmitter {
+export default class MPD extends EventEmitter {
   /**
    * MPD connection constructor.
    * @param {Object} options MPD options.

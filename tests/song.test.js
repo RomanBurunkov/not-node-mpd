@@ -1,4 +1,4 @@
-const Song = require('../src/song');
+import Song from '../src/song';
 
 const mockInfo = {
   time: 60,
