@@ -1,3 +1,9 @@
+# 1.0.0 (2024-11-16)
+  * Migrate to ECMAScript Modules.
+  * Update development dependencies.
+  * Update minimal Node version to 18.
+  * Do not use functions arguments default values(performance concernses).
+
 # 0.3.3 (2021-03-07)
 
   * Fix: Protocol.parseKvp Add check that argument is a string.
