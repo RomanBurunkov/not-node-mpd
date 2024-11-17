@@ -2,14 +2,17 @@ import { Socket } from 'node:net';
 import { EventEmitter } from 'node:events';
 
 import Song from './song';
-import { parseKvp, parseGreeting, findReturn, parseChanged } from './protocol';
 import OptionsFactory from './options.factory';
+import {
+  parseKvp, parseGreeting, findReturn, parseChanged, checkResponseStatus, parseStatusResponseValue,
+} from './protocol';
 
 const RECONNECT_INTERVAL = 5000;
 const CONST_FILE_LINE_START = 'file:';
 const GENERIC_COMMANDS = ['play', 'stop', 'pause', 'next', 'previous', 'toggle', 'clear'];
 
-const buffer = Symbol('Read buffer');
+const BUFFER = Symbol('Read buffer');
+const ACTIVE_LISTENER = Symbol('Listener for current command');
 
 export default class MPD extends EventEmitter {
   /**
@@ -33,11 +36,14 @@ export default class MPD extends EventEmitter {
     this.songs = [];
     this.status = {};
     this.server = {};
-    this[buffer] = '';
     this.playlist = [];
     this._requests = [];
     this.connected = false;
     this.disconnecting = false;
+    // Init internal props.
+    this[BUFFER] = '';
+    this[ACTIVE_LISTENER] = null;
+
     this._initGenericCommand();
     this.on('disconnected', () => this.restoreConnection());
   }
@@ -50,7 +56,7 @@ export default class MPD extends EventEmitter {
    */
   command() {
     return this._sendCommand(...arguments)
-      .then(r => this._answerCallbackError(r));
+      .then((r) => checkResponseStatus(r, this._activeMessage));
   }
 
   alive() { return this.connected; }
@@ -73,10 +79,15 @@ export default class MPD extends EventEmitter {
     return this._sendCommand('update')
       .then((r) => {
         const arr = r.split(/\n/);
-        return this._answerCallbackError(arr[1]);
+        checkResponseStatus(arr[1], this._activeMessage);
       });
   }
 
+  /**
+   * Searches the mpd database for songs matching FILTER and adds them to the queue.
+   * @param {Object} search Search filter.
+   * @returns {Promise<void>}
+   */
   searchAdd(search) {
     const args = ['searchadd'];
     for (let key in search) {
@@ -131,7 +142,7 @@ export default class MPD extends EventEmitter {
   disconnect() {
     this.disconnecting = true;
     this.busy = false;
-    this._activeListener = null;
+    this[ACTIVE_LISTENER] = null;
     this._requests.splice(0, this._requests.length);
     if (this.client) {
       this.client.destroy();
@@ -139,15 +150,10 @@ export default class MPD extends EventEmitter {
     }
   }
 
-  /* Not so toplevel methods */
+  /* Not so top level methods */
 
   _setReady() {
     this.emit('ready', this.status, this.server);
-  }
-
-  _answerCallbackError(msg) {
-    if (msg === 'OK') return;
-    throw new Error(`Bad status: "${msg}" after command "${this._activeMessage}"`);
   }
 
   _initGenericCommand() {
@@ -179,7 +185,7 @@ export default class MPD extends EventEmitter {
         if (songLines.length !== 0 && pos !== -1) {
           this.playlist[pos] = new Song(songLines);
         }
-        this._answerCallbackError(lines[lines.length - 1]);
+        checkResponseStatus(lines[lines.length - 1], this._activeMessage);
         return this.playlist;
       });
   }
@@ -201,29 +207,9 @@ export default class MPD extends EventEmitter {
         if(songLines.length !== 0) {
           this.songs.push(new Song(songLines));
         }
-        this._answerCallbackError(lines[lines.length - 1]);
+        checkResponseStatus(lines[lines.length - 1], this._activeMessage);
         return this.songs;
       });
-  }
-
-  _parseStatusResponseValue({ key, val }) {
-    switch (key) {
-      case 'repeat':
-      case 'single':
-      case 'random':
-      case 'consume': return val === '1';
-      case 'song':
-      case 'xfade':
-      case 'bitrate':
-      case 'playlist':
-      case 'playlistlength': return parseInt(val, 10);
-      case 'volume': return parseFloat(val.replace('%', '')) / 100;
-      case 'time': {
-        const [elapsed, length] = val.split(':');
-        return { elapsed, length };
-      }
-      default: return val;
-    }
   }
 
   _parseStatusResponse(message) {
@@ -233,7 +219,7 @@ export default class MPD extends EventEmitter {
       if (kvp === false) {
         throw new Error(`Unknown response while fetching status: ${line}`);
       }
-      this.status[kvp.key] = this._parseStatusResponseValue(kvp);
+      this.status[kvp.key] = parseStatusResponseValue(kvp);
     }
     return this.status;
   }
@@ -268,12 +254,12 @@ export default class MPD extends EventEmitter {
 
   _onData(data) {
     if (!this.idling && !this.commanding) return;
-    this[buffer] += !data ? '' : data.trim();
-    const index = findReturn(this[buffer]);
+    this[BUFFER] += !data ? '' : data.trim();
+    const index = findReturn(this[BUFFER]);
     if (index === -1) return;
     // We found a return mark
-    const string = this[buffer].substring(0, index).trim();
-    this[buffer] = this[buffer].substring(index, this[buffer].length);
+    const string = this[BUFFER].substring(0, index).trim();
+    this[BUFFER] = this[BUFFER].substring(index, this[BUFFER].length);
     if (this.idling) {
       this._onMessage(string);
     } else if (this.commanding) {
@@ -284,7 +270,7 @@ export default class MPD extends EventEmitter {
   /* Idling */
 
   _checkIdle() {
-    if (this._activeListener || this._requests.length || this.idling) return;
+    if (this[ACTIVE_LISTENER] || this._requests.length || this.idling) return;
     this._enterIdle();
   }
 
@@ -350,13 +336,13 @@ export default class MPD extends EventEmitter {
 
   _dequeue(request) {
     this.busy = false;
-    this._activeListener = request.callback;
+    this[ACTIVE_LISTENER] = request.callback;
     this._activeMessage = request.message;
     this._write(request.message);
   }
 
   _checkOutgoing() {
-    if (this._activeListener || this.busy) return;
+    if (this[ACTIVE_LISTENER] || this.busy) return;
     const request = this._requests.shift();
     if (!request) return;
     this.busy = true;
@@ -387,9 +373,9 @@ export default class MPD extends EventEmitter {
   }
 
   _handleResponse(message) {
-    if (!this._activeListener) return;
-    const callback = this._activeListener;
-    this._activeListener = null;
+    if (!this[ACTIVE_LISTENER]) return;
+    const callback = this[ACTIVE_LISTENER];
+    this[ACTIVE_LISTENER] = null;
     this._checkOutgoing();
     this._checkIdle();
     callback(message);

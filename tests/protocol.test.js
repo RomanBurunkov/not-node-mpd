@@ -1,5 +1,5 @@
 import {
-  parseKvp, parseGreeting, returnPatterns, findReturn, parseChanged,
+  parseKvp, parseGreeting, returnPatterns, findReturn, parseChanged, checkResponseStatus, parseStatusResponseValue,
 } from '../src/protocol';
 
 describe('Test parseKvp function', () => {
@@ -96,7 +96,8 @@ describe('Test findReturn function', () => {
 });
 
 describe('Test parseChanged function', () => {
-  test('Is defined', () => expect(parseChanged).toBeDefined());
+
+  test('parseChanged function should be defined', () => expect(parseChanged).toBeDefined());
   test('Returns an empty array if not acceptable data passed', () => {
     [null, {}, 25, undefined, ''].forEach((arg) => {
       const res = parseChanged(arg);
@@ -109,4 +110,72 @@ describe('Test parseChanged function', () => {
     const result = ['playlist', 'mixer'];
     expect(parseChanged(mock)).toEqual(result);
   });
+
+});
+
+describe('Test checkResponseStatus function', () => {
+
+  test('checkResponseStatus function should be defined', () => {
+    expect(checkResponseStatus).toBeDefined();
+    expect(typeof checkResponseStatus).toBe('function');
+  });
+
+  test('checkResponseStatus should throw an error if nothing passed', () => {
+    expect(() => checkResponseStatus()).toThrow('Bad status: "undefined" after command "undefined"');
+  });
+
+  test('checkResponseStatus should not throw an error if response status is "OK"', () => {
+    expect(() => checkResponseStatus('OK')).not.toThrow();
+  });
+
+});
+
+describe('Test parseStatusResponseValue function', () => {
+
+  const boolProperties = ['repeat', 'single', 'random', 'consume'];
+  const integerProperties = ['song', 'xfade', 'bitrate', 'playlist', 'playlistlength'];
+
+  test('parseStatusResponseValue function should be defined', () => {
+    expect(parseStatusResponseValue).toBeDefined();
+    expect(typeof parseStatusResponseValue).toBe('function');
+  });
+
+  boolProperties.forEach((prop) => {
+
+    test(`parseStatusResponseValue should return true for { key: '${prop}', val: '1' } KVP`, () => {
+      const result = parseStatusResponseValue({ key: prop, val: '1' });
+      expect(result).toBe(true);
+    });
+
+    test(`parseStatusResponseValue should return false for { key: '${prop}', val: '0' } KVP`, () => {
+      const result = parseStatusResponseValue({ key: prop, val: '0' });
+      expect(result).toBe(false);
+    });
+
+  });
+
+  integerProperties.forEach((prop) => {
+
+    test(`parseStatusResponseValue should return 10 for { key: '${prop}', val: '10' } KVP`, () => {
+      const result = parseStatusResponseValue({ key: prop, val: '10' });
+      expect(result).toBe(10);
+    });
+
+  });
+
+  test('parseStatusResponseValue should return 0.5 for { key: \'volume\', val: \'50%\' } KVP', () => {
+    const result = parseStatusResponseValue({ key: 'volume', val: '50%' });
+    expect(result).toBe(0.5);
+  });
+
+  test('parseStatusResponseValue should return { elapsed: 10, length: 15 } for { key: \'time\', val: \'10:15\' } KVP', () => {
+    const result = parseStatusResponseValue({ key: 'time', val: '10:15' });
+    expect(result).toEqual({ elapsed: '10', length: '15' });
+  });
+
+  test('parseStatusResponseValue should return \'Some Error\' for { key: \'error\', val: \'Some Error\' } KVP', () => {
+    const result = parseStatusResponseValue({ key: 'error', val: 'Some Error' });
+    expect(result).toBe('Some Error');
+  });
+
 });

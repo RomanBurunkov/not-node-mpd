@@ -72,3 +72,38 @@ export const parseChanged = (message) => {
     .filter(l => l.indexOf('changed:') === 0)
     .map(l => l.substring(8).trim());
 };
+
+/**
+ * Checks response status and throws an error if response is not OK.
+ * @param {string} responseStatus Response Status
+ * @param {*} commandName Request Command name.
+ */
+export function checkResponseStatus(responseStatus, commandName) {
+  if (responseStatus === 'OK') return;
+  throw new Error(`Bad status: "${responseStatus}" after command "${commandName}"`);
+}
+
+/**
+ * Parses value for status command response.
+ * @param {Object} kvp
+ * @returns {any} Parsed status value
+ */
+export function parseStatusResponseValue({ key, val }) {
+  switch (key) {
+    case 'repeat':
+    case 'single':
+    case 'random':
+    case 'consume': return val === '1';
+    case 'song':
+    case 'xfade':
+    case 'bitrate':
+    case 'playlist':
+    case 'playlistlength': return parseInt(val, 10);
+    case 'volume': return parseFloat(val.replace('%', '')) / 100;
+    case 'time': {
+      const [elapsed, length] = val.split(':');
+      return { elapsed, length };
+    }
+    default: return val;
+  }
+}
