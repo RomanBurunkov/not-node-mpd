@@ -3,14 +3,8 @@ import { EventEmitter } from 'node:events';
 
 import Song from './song';
 import { parseKvp, parseGreeting, findReturn, parseChanged } from './protocol';
+import OptionsFactory from './options.factory';
 
-const DEF_PORT = 6600;
-const DEF_HOST = 'localhost';
-const DEF_SOCKET = '/var/run/mpd/socket';
-const DEF_KEEP_ALIVE = false;
-const DEF_CONN_TYPE = 'network';
-
-const CONN_TYPES = ['ipc', 'network'];
 const RECONNECT_INTERVAL = 5000;
 const CONST_FILE_LINE_START = 'file:';
 const GENERIC_COMMANDS = ['play', 'stop', 'pause', 'next', 'previous', 'toggle', 'clear'];
@@ -30,12 +24,11 @@ export default class MPD extends EventEmitter {
   constructor(options) {
     super();
     // Applying options.
-    const opts = options || {};
-    this.ipc = opts.ipc || DEF_SOCKET;
-    this.host = opts.host || DEF_HOST;
-    this.port = opts.port || DEF_PORT;
-    this.type = CONN_TYPES.includes(opts.type) ? opts.type : DEF_CONN_TYPE;
-    this.keepAlive = !!opts.keepAlive || DEF_KEEP_ALIVE;
+    Object
+      .entries(OptionsFactory(options))
+      .forEach(([key, val]) => {
+        this[key] = val;
+      });
     // Init props.
     this.songs = [];
     this.status = {};
@@ -146,7 +139,7 @@ export default class MPD extends EventEmitter {
     }
   }
 
-  /* Not-so-toplevel methods */
+  /* Not so toplevel methods */
 
   _setReady() {
     this.emit('ready', this.status, this.server);
